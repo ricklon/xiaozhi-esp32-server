@@ -40,7 +40,6 @@ class VLLMProvider(VLLMProviderBase):
         self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
 
     def response(self, question, base64_image):
-        question = question + "(请使用中文回复)"
         try:
             messages = [
                 {
@@ -61,7 +60,14 @@ class VLLMProvider(VLLMProviderBase):
                 model=self.model_name, messages=messages, stream=False
             )
 
-            return response.choices[0].message.content
+            if not response.choices:
+                raise ValueError(f"VLLM returned empty choices (finish_reason may indicate filtering)")
+
+            content = response.choices[0].message.content
+            if content is None:
+                raise ValueError("VLLM returned null content")
+
+            return content
 
         except Exception as e:
             logger.bind(tag=TAG).error(f"Error in response generation: {e}")
