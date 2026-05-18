@@ -1,4 +1,5 @@
 import os
+import re
 import asyncio
 import yaml
 from collections.abc import Mapping
@@ -17,10 +18,21 @@ def get_project_dir():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 
 
+def _expand_env_vars(obj):
+    """Recursively expand ${VAR} references in string config values."""
+    if isinstance(obj, str):
+        return re.sub(r"\$\{([^}]+)\}", lambda m: os.environ.get(m.group(1), m.group(0)), obj)
+    if isinstance(obj, dict):
+        return {k: _expand_env_vars(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_expand_env_vars(i) for i in obj]
+    return obj
+
+
 def read_config(config_path):
     with open(config_path, "r", encoding="utf-8") as file:
         config = yaml.safe_load(file)
-    return config
+    return _expand_env_vars(config)
 
 
 def load_config():

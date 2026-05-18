@@ -2,6 +2,8 @@ import sys
 import uuid
 import signal
 import asyncio
+from dotenv import load_dotenv
+load_dotenv()
 from aioconsole import ainput
 from config.settings import load_config
 from config.logger import setup_logging
